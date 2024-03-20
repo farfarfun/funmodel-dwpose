@@ -1,16 +1,27 @@
-import os
-
-from funmodel.core.predict import ImagePredictModel
-
-import torch
 import numpy as np
-from .core import util
-from .core.wholebody import Wholebody
+import torch
+from fundrive.download import simple_download
+from fundrive.drives.oss import public_oss_url
+from funmodel.core.predict import ImagePredictModel
+from funmodel.dwpose.core import util
+from funmodel.dwpose.core.wholebody import Wholebody
 
 
 class DWposePredict(ImagePredictModel):
-    def __init__(self, onnx_det=None, onnx_pose=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.pose_estimation = None
+
+    def load(self, *args, **kwargs):
+        onnx_det = f"{self.cache_path}/yolox_l.onnx"
+        onnx_pose = f"{self.cache_path}/dw-ll_ucoco_384.onnx"
+        simple_download(
+            url=public_oss_url(path="models/dwpose/yolox_l.onnx"), filepath=onnx_det
+        )
+        simple_download(
+            url=public_oss_url(path="models/dwpose/dw-ll_ucoco_384.onnx"),
+            filepath=onnx_pose,
+        )
         self.pose_estimation = Wholebody(onnx_det=onnx_det, onnx_pose=onnx_pose)
 
     def draw_image(self, image, result, *args, **kwargs):
