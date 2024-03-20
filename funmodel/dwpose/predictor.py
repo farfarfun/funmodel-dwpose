@@ -11,6 +11,7 @@ class DWposePredict(ImagePredictModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pose_estimation = None
+        self.load()
 
     def load(self, *args, **kwargs):
         onnx_det = f"{self.cache_path}/yolox_l.onnx"
