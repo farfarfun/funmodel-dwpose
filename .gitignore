@@ -184,3 +184,12 @@ cython_debug/
 .specstory/
 CLAUDE.local.md
 AGENTS.local.md
+
+# 组织规范要求的额外忽略规则
+*.db
+*.rar
+.run/
+logs/
+.idea/
+.vscode/
+node_modules/

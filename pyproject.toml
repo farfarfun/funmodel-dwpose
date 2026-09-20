@@ -1,14 +1,14 @@
 [project]
 name = "funmodel-dwpose"
 version = "0.0.12"
-description = "funmodel-dwpose"
+description = "基于 DWPose 的人体全身姿态估计模型，funmodel 命名空间子包"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "牛哥", email = "farfarfun@qq.com" }]
 dependencies = [
-    "funmodel",
+    "funmodel>=0.0.9",
     "fundrive[oss]>=2.0",
     "funget>=1.1",
     "opencv-python>=4.6",
