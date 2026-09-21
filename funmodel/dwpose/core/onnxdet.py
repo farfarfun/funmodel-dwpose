@@ -3,8 +3,9 @@ import numpy as np
 
 import onnxruntime
 
-def nms(boxes, scores, nms_thr):
-    """Single class NMS implemented in Numpy."""
+
+def nms(boxes: np.ndarray, scores: np.ndarray, nms_thr: float) -> list[int]:
+    """执行单类别非极大值抑制，返回保留框的索引。"""
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     x2 = boxes[:, 2]
@@ -32,8 +33,10 @@ def nms(boxes, scores, nms_thr):
 
     return keep
 
-def multiclass_nms(boxes, scores, nms_thr, score_thr):
-    """Multiclass NMS implemented in Numpy. Class-aware version."""
+def multiclass_nms(
+    boxes: np.ndarray, scores: np.ndarray, nms_thr: float, score_thr: float
+) -> np.ndarray | None:
+    """执行按类别区分的非极大值抑制。"""
     final_dets = []
     num_classes = scores.shape[1]
     for cls_ind in range(num_classes):
@@ -55,7 +58,10 @@ def multiclass_nms(boxes, scores, nms_thr, score_thr):
         return None
     return np.concatenate(final_dets, 0)
 
-def demo_postprocess(outputs, img_size, p6=False):
+def demo_postprocess(
+    outputs: np.ndarray, img_size: tuple[int, int], p6: bool = False
+) -> np.ndarray:
+    """将模型输出的网格坐标还原为图像坐标。"""
     grids = []
     expanded_strides = []
     strides = [8, 16, 32] if not p6 else [8, 16, 32, 64]
@@ -77,7 +83,12 @@ def demo_postprocess(outputs, img_size, p6=False):
 
     return outputs
 
-def preprocess(img, input_size, swap=(2, 0, 1)):
+def preprocess(
+    img: np.ndarray,
+    input_size: tuple[int, int],
+    swap: tuple[int, int, int] = (2, 0, 1),
+) -> tuple[np.ndarray, float]:
+    """缩放并填充输入图像，返回模型输入和缩放比例。"""
     if len(img.shape) == 3:
         padded_img = np.ones((input_size[0], input_size[1], 3), dtype=np.uint8) * 114
     else:
@@ -95,9 +106,12 @@ def preprocess(img, input_size, swap=(2, 0, 1)):
     padded_img = np.ascontiguousarray(padded_img, dtype=np.float32)
     return padded_img, r
 
-def inference_detector(session, oriImg):
+def inference_detector(
+    session: onnxruntime.InferenceSession, ori_img: np.ndarray
+) -> np.ndarray:
+    """执行目标检测推理并返回人体边界框。"""
     input_shape = (640,640)
-    img, ratio = preprocess(oriImg, input_shape)
+    img, ratio = preprocess(ori_img, input_shape)
 
     ort_inputs = {session.get_inputs()[0].name: img[None, :, :, :]}
     output = session.run(None, ort_inputs)

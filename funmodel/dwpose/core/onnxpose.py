@@ -4,21 +4,20 @@ import numpy as np
 import onnxruntime as ort
 
 def preprocess(
-    img: np.ndarray, out_bbox, input_size: tuple[int, int] = (192, 256)
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Do preprocessing for RTMPose model inference.
+    img: np.ndarray,
+    out_bbox: np.ndarray | list[list[float]],
+    input_size: tuple[int, int] = (192, 256),
+) -> tuple[list[np.ndarray], list[np.ndarray], list[np.ndarray]]:
+    """为 RTMPose 推理预处理图像。
 
     Args:
-        img (np.ndarray): Input image in shape.
-        input_size (tuple): Input image size in shape (w, h).
+        img: 输入图像。
+        input_size: 模型输入尺寸，格式为 (宽, 高)。
 
     Returns:
-        tuple:
-        - resized_img (np.ndarray): Preprocessed image.
-        - center (np.ndarray): Center of image.
-        - scale (np.ndarray): Scale of image.
+        预处理图像、边界框中心和缩放尺寸。
     """
-    # get shape of image
+    # 获取图像尺寸。
     img_shape = img.shape[:2]
     out_img, out_center, out_scale = [], [], []
     if len(out_bbox) == 0:
@@ -30,13 +29,13 @@ def preprocess(
         y1 = out_bbox[i][3]
         bbox = np.array([x0, y0, x1, y1])
 
-        # get center and scale
+        # 计算边界框中心和缩放尺寸。
         center, scale = bbox_xyxy2cs(bbox, padding=1.25)
 
-        # do affine transformation
+        # 执行仿射变换。
         resized_img, scale = top_down_affine(input_size, scale, center, img)
 
-        # normalize image
+        # 按模型参数归一化图像。
         mean = np.array([123.675, 116.28, 103.53])
         std = np.array([58.395, 57.12, 57.375])
         resized_img = (resized_img - mean) / std
@@ -48,62 +47,63 @@ def preprocess(
     return out_img, out_center, out_scale
 
 
-def inference(sess: ort.InferenceSession, img: np.ndarray) -> np.ndarray:
-    """Inference RTMPose model.
+def inference(
+    sess: ort.InferenceSession, img: list[np.ndarray]
+) -> list[list[np.ndarray]]:
+    """执行 RTMPose 模型推理。
 
     Args:
-        sess (ort.InferenceSession): ONNXRuntime session.
-        img (np.ndarray): Input image in shape.
+        sess: ONNX Runtime 会话。
+        img: 已预处理的图像批次。
 
     Returns:
-        outputs (np.ndarray): Output of RTMPose model.
+        模型输出列表。
     """
     all_out = []
-    # build input
+    # 构造模型输入。
     for i in range(len(img)):
         input = [img[i].transpose(2, 0, 1)]
 
-        # build output
+        # 收集模型输出名称。
         sess_input = {sess.get_inputs()[0].name: input}
         sess_output = []
         for out in sess.get_outputs():
             sess_output.append(out.name)
 
-        # run model
+        # 执行推理。
         outputs = sess.run(sess_output, sess_input)
         all_out.append(outputs)
 
     return all_out
 
 
-def postprocess(outputs: list[np.ndarray],
-                model_input_size: tuple[int, int],
-                center: tuple[int, int],
-                scale: tuple[int, int],
-                simcc_split_ratio: float = 2.0
-                ) -> tuple[np.ndarray, np.ndarray]:
-    """Postprocess for RTMPose model output.
+def postprocess(
+    outputs: list[list[np.ndarray]],
+    model_input_size: tuple[int, int],
+    center: list[np.ndarray],
+    scale: list[np.ndarray],
+    simcc_split_ratio: float = 2.0,
+) -> tuple[np.ndarray, np.ndarray]:
+    """后处理 RTMPose 模型输出。
 
     Args:
-        outputs (np.ndarray): Output of RTMPose model.
-        model_input_size (tuple): RTMPose model Input image size.
-        center (tuple): Center of bbox in shape (x, y).
-        scale (tuple): Scale of bbox in shape (w, h).
-        simcc_split_ratio (float): Split ratio of simcc.
+        outputs: 模型输出。
+        model_input_size: 模型输入尺寸。
+        center: 边界框中心坐标 (x, y)。
+        scale: 边界框尺寸 (宽, 高)。
+        simcc_split_ratio: SimCC 分割比例。
 
     Returns:
-        tuple:
-        - keypoints (np.ndarray): Rescaled keypoints.
-        - scores (np.ndarray): Model predict scores.
+        缩放回原图坐标的关键点和置信度。
     """
     all_key = []
     all_score = []
     for i in range(len(outputs)):
-        # use simcc to decode
+        # 解码 SimCC 输出。
         simcc_x, simcc_y = outputs[i]
         keypoints, scores = decode(simcc_x, simcc_y, simcc_split_ratio)
 
-        # rescale keypoints
+        # 将关键点缩放回原图坐标。
         keypoints = keypoints / model_input_size * scale[i] + center[i] - scale[i] / 2
         all_key.append(keypoints[0])
         all_score.append(scores[0])
@@ -113,27 +113,21 @@ def postprocess(outputs: list[np.ndarray],
 
 def bbox_xyxy2cs(bbox: np.ndarray,
                  padding: float = 1.) -> tuple[np.ndarray, np.ndarray]:
-    """Transform the bbox format from (x,y,w,h) into (center, scale)
+    """将边界框从 (x1,y1,x2,y2) 转换为 (中心, 尺寸)。
 
     Args:
-        bbox (ndarray): Bounding box(es) in shape (4,) or (n, 4), formatted
-            as (left, top, right, bottom)
-        padding (float): BBox padding factor that will be multilied to scale.
-            Default: 1.0
+        bbox: 形状为 (4,) 或 (n, 4) 的边界框。
+        padding: 尺寸扩展比例，默认值为 1.0。
 
     Returns:
-        tuple: A tuple containing center and scale.
-        - np.ndarray[float32]: Center (x, y) of the bbox in shape (2,) or
-            (n, 2)
-        - np.ndarray[float32]: Scale (w, h) of the bbox in shape (2,) or
-            (n, 2)
+        边界框中心和尺寸数组。
     """
-    # convert single bbox from (4, ) to (1, 4)
+    # 将单个边界框转换为批量形状。
     dim = bbox.ndim
     if dim == 1:
         bbox = bbox[None, :]
 
-    # get bbox center and scale
+    # 计算边界框中心和尺寸。
     x1, y1, x2, y2 = np.hsplit(bbox, [1, 2, 3])
     center = np.hstack([x1 + x2, y1 + y2]) * 0.5
     scale = np.hstack([x2 - x1, y2 - y1]) * padding
@@ -147,14 +141,14 @@ def bbox_xyxy2cs(bbox: np.ndarray,
 
 def _fix_aspect_ratio(bbox_scale: np.ndarray,
                       aspect_ratio: float) -> np.ndarray:
-    """Extend the scale to match the given aspect ratio.
+    """扩展尺寸以匹配指定的宽高比。
 
     Args:
-        scale (np.ndarray): The image scale (w, h) in shape (2, )
-        aspect_ratio (float): The ratio of ``w/h``
+        bbox_scale: 图像尺寸 (宽, 高)。
+        aspect_ratio: 宽高比。
 
     Returns:
-        np.ndarray: The reshaped image scale in (2, )
+        调整后的图像尺寸。
     """
     w, h = np.hsplit(bbox_scale, [1])
     bbox_scale = np.where(w > h * aspect_ratio,
@@ -164,14 +158,14 @@ def _fix_aspect_ratio(bbox_scale: np.ndarray,
 
 
 def _rotate_point(pt: np.ndarray, angle_rad: float) -> np.ndarray:
-    """Rotate a point by an angle.
+    """按弧度旋转二维点。
 
     Args:
-        pt (np.ndarray): 2D point coordinates (x, y) in shape (2, )
-        angle_rad (float): rotation angle in radian
+        pt: 二维点坐标 (x, y)。
+        angle_rad: 旋转角度，单位为弧度。
 
     Returns:
-        np.ndarray: Rotated point in shape (2, )
+        旋转后的二维点。
     """
     sn, cs = np.sin(angle_rad), np.cos(angle_rad)
     rot_mat = np.array([[cs, -sn], [sn, cs]])
@@ -179,18 +173,14 @@ def _rotate_point(pt: np.ndarray, angle_rad: float) -> np.ndarray:
 
 
 def _get_3rd_point(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """To calculate the affine matrix, three pairs of points are required. This
-    function is used to get the 3rd point, given 2D points a & b.
-
-    The 3rd point is defined by rotating vector `a - b` by 90 degrees
-    anticlockwise, using b as the rotation center.
+    """根据两个二维点计算仿射变换所需的第三个点。
 
     Args:
-        a (np.ndarray): The 1st point (x,y) in shape (2, )
-        b (np.ndarray): The 2nd point (x,y) in shape (2, )
+        a: 第一个二维点。
+        b: 第二个二维点。
 
     Returns:
-        np.ndarray: The 3rd point.
+        第三个二维点。
     """
     direction = a - b
     c = b + np.r_[-direction[1], direction[0]]
@@ -203,8 +193,7 @@ def get_warp_matrix(center: np.ndarray,
                     output_size: tuple[int, int],
                     shift: tuple[float, float] = (0., 0.),
                     inv: bool = False) -> np.ndarray:
-    """Calculate the affine transformation matrix that can warp the bbox area
-    in the input image to the output size.
+    """计算将边界框区域变换到目标尺寸的仿射矩阵。
 
     Args:
         center (np.ndarray[2, ]): Center of the bounding box (x, y).
@@ -226,18 +215,18 @@ def get_warp_matrix(center: np.ndarray,
     dst_w = output_size[0]
     dst_h = output_size[1]
 
-    # compute transformation matrix
+    # 计算仿射变换矩阵。
     rot_rad = np.deg2rad(rot)
     src_dir = _rotate_point(np.array([0., src_w * -0.5]), rot_rad)
     dst_dir = np.array([0., dst_w * -0.5])
 
-    # get four corners of the src rectangle in the original image
+    # 获取原图中源矩形的角点。
     src = np.zeros((3, 2), dtype=np.float32)
     src[0, :] = center + scale * shift
     src[1, :] = center + src_dir + scale * shift
     src[2, :] = _get_3rd_point(src[0, :], src[1, :])
 
-    # get four corners of the dst rectangle in the input image
+    # 获取模型输入中目标矩形的角点。
     dst = np.zeros((3, 2), dtype=np.float32)
     dst[0, :] = [dst_w * 0.5, dst_h * 0.5]
     dst[1, :] = np.array([dst_w * 0.5, dst_h * 0.5]) + dst_dir
@@ -251,34 +240,32 @@ def get_warp_matrix(center: np.ndarray,
     return warp_mat
 
 
-def top_down_affine(input_size: dict, bbox_scale: dict, bbox_center: dict,
+def top_down_affine(input_size: tuple[int, int], bbox_scale: np.ndarray, bbox_center: np.ndarray,
                     img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Get the bbox image as the model input by affine transform.
+    """通过仿射变换提取边界框区域作为模型输入。
 
     Args:
-        input_size (dict): The input size of the model.
-        bbox_scale (dict): The bbox scale of the img.
-        bbox_center (dict): The bbox center of the img.
-        img (np.ndarray): The original image.
+        input_size: 模型输入尺寸。
+        bbox_scale: 图像边界框尺寸。
+        bbox_center: 图像边界框中心。
+        img: 原始图像。
 
     Returns:
-        tuple: A tuple containing center and scale.
-        - np.ndarray[float32]: img after affine transform.
-        - np.ndarray[float32]: bbox scale after affine transform.
+        仿射变换后的图像和边界框尺寸。
     """
     w, h = input_size
     warp_size = (int(w), int(h))
 
-    # reshape bbox to fixed aspect ratio
+    # 将边界框调整到固定宽高比。
     bbox_scale = _fix_aspect_ratio(bbox_scale, aspect_ratio=w / h)
 
-    # get the affine matrix
+    # 计算仿射矩阵。
     center = bbox_center
     scale = bbox_scale
     rot = 0
     warp_mat = get_warp_matrix(center, scale, rot, output_size=(w, h))
 
-    # do affine transform
+    # 执行仿射变换。
     img = cv2.warpAffine(img, warp_mat, warp_size, flags=cv2.INTER_LINEAR)
 
     return img, bbox_scale
@@ -286,7 +273,7 @@ def top_down_affine(input_size: dict, bbox_scale: dict, bbox_center: dict,
 
 def get_simcc_maximum(simcc_x: np.ndarray,
                       simcc_y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Get maximum response location and value from simcc representations.
+    """从 SimCC 表示中获取最大响应位置和数值。
 
     Note:
         instance number: N
@@ -309,20 +296,20 @@ def get_simcc_maximum(simcc_x: np.ndarray,
     simcc_x = simcc_x.reshape(N * K, -1)
     simcc_y = simcc_y.reshape(N * K, -1)
 
-    # get maximum value locations
+    # 获取最大值位置。
     x_locs = np.argmax(simcc_x, axis=1)
     y_locs = np.argmax(simcc_y, axis=1)
     locs = np.stack((x_locs, y_locs), axis=-1).astype(np.float32)
     max_val_x = np.amax(simcc_x, axis=1)
     max_val_y = np.amax(simcc_y, axis=1)
 
-    # get maximum value across x and y axis
+    # 获取 x、y 方向的共同最大响应。
     mask = max_val_x > max_val_y
     max_val_x[mask] = max_val_y[mask]
     vals = max_val_x
     locs[vals <= 0.] = -1
 
-    # reshape
+    # 恢复输出形状。
     locs = locs.reshape(N, K, 2)
     vals = vals.reshape(N, K)
 
@@ -330,18 +317,16 @@ def get_simcc_maximum(simcc_x: np.ndarray,
 
 
 def decode(simcc_x: np.ndarray, simcc_y: np.ndarray,
-           simcc_split_ratio) -> tuple[np.ndarray, np.ndarray]:
-    """Modulate simcc distribution with Gaussian.
+           simcc_split_ratio: float) -> tuple[np.ndarray, np.ndarray]:
+    """根据 SimCC 分割比例解码关键点坐标。
 
     Args:
-        simcc_x (np.ndarray[K, Wx]): model predicted simcc in x.
-        simcc_y (np.ndarray[K, Wy]): model predicted simcc in y.
-        simcc_split_ratio (int): The split ratio of simcc.
+        simcc_x: 模型预测的 x 方向 SimCC。
+        simcc_y: 模型预测的 y 方向 SimCC。
+        simcc_split_ratio: SimCC 分割比例。
 
     Returns:
-        tuple: A tuple containing center and scale.
-        - np.ndarray[float32]: keypoints in shape (K, 2) or (n, K, 2)
-        - np.ndarray[float32]: scores in shape (K,) or (n, K)
+        关键点坐标和置信度。
     """
     keypoints, scores = get_simcc_maximum(simcc_x, simcc_y)
     keypoints /= simcc_split_ratio
@@ -349,10 +334,13 @@ def decode(simcc_x: np.ndarray, simcc_y: np.ndarray,
     return keypoints, scores
 
 
-def inference_pose(session, out_bbox, oriImg):
+def inference_pose(
+    session: ort.InferenceSession, out_bbox: np.ndarray, ori_img: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """执行姿态模型推理并返回关键点和置信度。"""
     h, w = session.get_inputs()[0].shape[2:]
     model_input_size = (w, h)
-    resized_img, center, scale = preprocess(oriImg, out_bbox, model_input_size)
+    resized_img, center, scale = preprocess(ori_img, out_bbox, model_input_size)
     outputs = inference(session, resized_img)
     keypoints, scores = postprocess(outputs, model_input_size, center, scale)
 

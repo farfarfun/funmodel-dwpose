@@ -17,6 +17,11 @@ class _FakePoseEstimation:
         return candidate, subset
 
 
+class _EmptyPoseEstimation:
+    def __call__(self, img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        return np.empty((0, 134, 2), dtype=np.float64), np.empty((0, 134))
+
+
 @pytest.fixture
 def predictor(monkeypatch: pytest.MonkeyPatch) -> DWposePredict:
     monkeypatch.setattr(DWposePredict, "load", lambda self, *a, **k: None)
@@ -61,3 +66,18 @@ def test_predict_keypoint_group_slicing_is_disjoint(predictor: DWposePredict) ->
     assert pose["hand2"].shape[1] == 21
     assert pose["faces"].shape[1] == 68
     assert pose["foots"].shape[1] == 6
+
+
+def test_predict_handles_no_detections(predictor: DWposePredict) -> None:
+    predictor.pose_estimation = _EmptyPoseEstimation()
+
+    pose, output = predictor.predict(np.zeros((10, 20, 3), dtype=np.uint8))
+
+    assert pose["nums"] == 0
+    assert all(value.shape[0] == 0 for key, value in pose.items() if hasattr(value, "shape"))
+    np.testing.assert_array_equal(output, np.zeros((10, 20, 3), dtype=np.uint8))
+
+
+def test_predict_rejects_non_image_input(predictor: DWposePredict) -> None:
+    with pytest.raises(ValueError):
+        predictor.predict(np.zeros((10, 20), dtype=np.uint8))
