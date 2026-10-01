@@ -1,11 +1,21 @@
 import math
+from typing import Any, Mapping
 
 import cv2
 import matplotlib
 import numpy as np
 
 
-def smart_resize(x, s):
+def smart_resize(x: np.ndarray, s: tuple[int, int]) -> np.ndarray:
+    """按目标尺寸缩放二维图像或多通道数组。
+
+    Args:
+        x: 待缩放的图像数组。
+        s: 目标尺寸，格式为（高，宽）。
+
+    Returns:
+        缩放后的图像数组。
+    """
     Ht, Wt = s
     if x.ndim == 2:
         Ho, Wo = x.shape
@@ -23,7 +33,17 @@ def smart_resize(x, s):
         return np.stack([smart_resize(x[:, :, i], s) for i in range(Co)], axis=2)
 
 
-def smart_resize_k(x, fx, fy):
+def smart_resize_k(x: np.ndarray, fx: float, fy: float) -> np.ndarray:
+    """按水平和垂直比例缩放图像。
+
+    Args:
+        x: 待缩放的图像数组。
+        fx: 水平方向缩放比例。
+        fy: 垂直方向缩放比例。
+
+    Returns:
+        缩放后的图像数组。
+    """
     if x.ndim == 2:
         Ho, Wo = x.shape
         Co = 1
@@ -41,7 +61,19 @@ def smart_resize_k(x, fx, fy):
         return np.stack([smart_resize_k(x[:, :, i], fx, fy) for i in range(Co)], axis=2)
 
 
-def padRightDownCorner(img, stride, padValue):
+def padRightDownCorner(
+    img: np.ndarray, stride: int, padValue: int | float
+) -> tuple[np.ndarray, list[int]]:
+    """在图像右侧和下方填充像素，使尺寸成为步长的整数倍。
+
+    Args:
+        img: 待填充的图像数组。
+        stride: 尺寸对齐步长。
+        padValue: 填充像素值。
+
+    Returns:
+        填充后的图像和四个方向的填充量。
+    """
     h = img.shape[0]
     w = img.shape[1]
 
@@ -64,7 +96,16 @@ def padRightDownCorner(img, stride, padValue):
     return img_padded, pad
 
 
-def transfer(model, model_weights):
+def transfer(model: Any, model_weights: Mapping[str, Any]) -> dict[str, Any]:
+    """将外部权重名称转换为模型状态字典使用的名称。
+
+    Args:
+        model: 提供 ``state_dict`` 方法的模型。
+        model_weights: 以外部参数名为键的权重映射。
+
+    Returns:
+        可供模型加载的权重字典。
+    """
     transfered_model_weights = {}
     for weights_name in model.state_dict().keys():
         transfered_model_weights[weights_name] = model_weights[
@@ -73,7 +114,16 @@ def transfer(model, model_weights):
     return transfered_model_weights
 
 
-def draw_bodypose(canvas, bodies):
+def draw_bodypose(canvas: np.ndarray, bodies: Any) -> np.ndarray:
+    """在画布上绘制人体关键点和骨架。
+
+    Args:
+        canvas: 待绘制的图像数组。
+        bodies: 人体关键点集合。
+
+    Returns:
+        绘制人体骨架后的画布。
+    """
     H, W, C = canvas.shape
     bodies = np.array(bodies)
 
@@ -150,7 +200,19 @@ def draw_bodypose(canvas, bodies):
     return canvas
 
 
-def draw_handpose(canvas, hands, eps=0.01):
+def draw_handpose(
+    canvas: np.ndarray, hands: Any, eps: float = 0.01
+) -> np.ndarray:
+    """在画布上绘制手部关键点和连线。
+
+    Args:
+        canvas: 待绘制的图像数组。
+        hands: 手部关键点集合。
+        eps: 判定关键点有效的最小坐标值。
+
+    Returns:
+        绘制手部姿态后的画布。
+    """
     H, W, C = canvas.shape
 
     edges = [
@@ -205,7 +267,19 @@ def draw_handpose(canvas, hands, eps=0.01):
     return canvas
 
 
-def draw_facepose(canvas, all_lmks, eps=0.01):
+def draw_facepose(
+    canvas: np.ndarray, all_lmks: Any, eps: float = 0.01
+) -> np.ndarray:
+    """在画布上绘制面部关键点。
+
+    Args:
+        canvas: 待绘制的图像数组。
+        all_lmks: 面部关键点集合。
+        eps: 判定关键点有效的最小坐标值。
+
+    Returns:
+        绘制面部关键点后的画布。
+    """
     H, W, C = canvas.shape
     for lmks in all_lmks:
         lmks = np.array(lmks)
@@ -220,7 +294,19 @@ def draw_facepose(canvas, all_lmks, eps=0.01):
 
 # detect hand according to body pose keypoints
 # please refer to https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/src/openpose/hand/handDetector.cpp
-def handDetect(candidate, subset, oriImg):
+def handDetect(
+    candidate: np.ndarray, subset: np.ndarray, oriImg: np.ndarray
+) -> list[list[int | bool]]:
+    """根据人体关键点估算手部检测区域。
+
+    Args:
+        candidate: 候选人体关键点坐标。
+        subset: 每个人体使用的关键点索引。
+        oriImg: 原始图像。
+
+    Returns:
+        手部方框列表，每项包含左上角、边长和是否为左手。
+    """
     # right hand: wrist 4, elbow 3, shoulder 2
     # left hand: wrist 7, elbow 6, shoulder 5
     ratioWristElbow = 0.33
@@ -292,7 +378,19 @@ def handDetect(candidate, subset, oriImg):
 
 
 # Written by Lvmin
-def faceDetect(candidate, subset, oriImg):
+def faceDetect(
+    candidate: np.ndarray, subset: np.ndarray, oriImg: np.ndarray
+) -> list[list[int]]:
+    """根据人体关键点估算面部检测区域。
+
+    Args:
+        candidate: 候选人体关键点坐标。
+        subset: 每个人体使用的关键点索引。
+        oriImg: 原始图像。
+
+    Returns:
+        面部方框列表，每项包含左上角和边长。
+    """
     # left right eye ear 14 15 16 17
     detect_result = []
     image_height, image_width = oriImg.shape[0:2]
@@ -363,7 +461,15 @@ def faceDetect(candidate, subset, oriImg):
 
 
 # get max index of 2d array
-def npmax(array):
+def npmax(array: np.ndarray) -> tuple[int, int]:
+    """返回二维数组最大值的行列索引。
+
+    Args:
+        array: 待查找的二维数组。
+
+    Returns:
+        最大值所在的行索引和列索引。
+    """
     arrayindex = array.argmax(1)
     arrayvalue = array.max(1)
     i = arrayvalue.argmax()

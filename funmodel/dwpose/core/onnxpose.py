@@ -12,6 +12,7 @@ def preprocess(
 
     Args:
         img: 输入图像。
+        out_bbox: 待估计姿态的人体边界框。
         input_size: 模型输入尺寸，格式为 (宽, 高)。
 
     Returns:
@@ -196,19 +197,15 @@ def get_warp_matrix(center: np.ndarray,
     """计算将边界框区域变换到目标尺寸的仿射矩阵。
 
     Args:
-        center (np.ndarray[2, ]): Center of the bounding box (x, y).
-        scale (np.ndarray[2, ]): Scale of the bounding box
-            wrt [width, height].
-        rot (float): Rotation angle (degree).
-        output_size (np.ndarray[2, ] | list(2,)): Size of the
-            destination heatmaps.
-        shift (0-100%): Shift translation ratio wrt the width/height.
-            Default (0., 0.).
-        inv (bool): Option to inverse the affine transform direction.
-            (inv=False: src->dst or inv=True: dst->src)
+        center: 边界框中心坐标。
+        scale: 边界框的宽度和高度。
+        rot: 旋转角度，单位为度。
+        output_size: 目标输出尺寸。
+        shift: 相对于宽度和高度的平移比例。
+        inv: 是否计算从目标到源图像的逆变换。
 
     Returns:
-        np.ndarray: A 2x3 transformation matrix
+        形状为 ``(2, 3)`` 的仿射变换矩阵。
     """
     shift = np.array(shift)
     src_w = scale[0]
@@ -275,22 +272,12 @@ def get_simcc_maximum(simcc_x: np.ndarray,
                       simcc_y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """从 SimCC 表示中获取最大响应位置和数值。
 
-    Note:
-        instance number: N
-        num_keypoints: K
-        heatmap height: H
-        heatmap width: W
-
     Args:
-        simcc_x (np.ndarray): x-axis SimCC in shape (K, Wx) or (N, K, Wx)
-        simcc_y (np.ndarray): y-axis SimCC in shape (K, Wy) or (N, K, Wy)
+        simcc_x: 形状为 ``(N, K, Wx)`` 的横轴 SimCC 表示。
+        simcc_y: 形状为 ``(N, K, Wy)`` 的纵轴 SimCC 表示。
 
     Returns:
-        tuple:
-        - locs (np.ndarray): locations of maximum heatmap responses in shape
-            (K, 2) or (N, K, 2)
-        - vals (np.ndarray): values of maximum heatmap responses in shape
-            (K,) or (N, K)
+        最大响应坐标和对应响应值。
     """
     N, K, Wx = simcc_x.shape
     simcc_x = simcc_x.reshape(N * K, -1)
@@ -337,7 +324,16 @@ def decode(simcc_x: np.ndarray, simcc_y: np.ndarray,
 def inference_pose(
     session: ort.InferenceSession, out_bbox: np.ndarray, ori_img: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    """执行姿态模型推理并返回关键点和置信度。"""
+    """执行姿态模型推理并返回关键点和置信度。
+
+    Args:
+        session: 姿态估计 ONNX Runtime 会话。
+        out_bbox: 人体检测边界框。
+        ori_img: BGR 格式的输入图像。
+
+    Returns:
+        姿态关键点坐标和对应置信度。
+    """
     h, w = session.get_inputs()[0].shape[2:]
     model_input_size = (w, h)
     resized_img, center, scale = preprocess(ori_img, out_bbox, model_input_size)

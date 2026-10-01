@@ -5,7 +5,16 @@ import onnxruntime
 
 
 def nms(boxes: np.ndarray, scores: np.ndarray, nms_thr: float) -> list[int]:
-    """执行单类别非极大值抑制，返回保留框的索引。"""
+    """执行单类别非极大值抑制。
+
+    Args:
+        boxes: 边界框坐标数组。
+        scores: 每个边界框的置信度。
+        nms_thr: 重叠率抑制阈值。
+
+    Returns:
+        保留边界框的索引。
+    """
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     x2 = boxes[:, 2]
@@ -36,7 +45,17 @@ def nms(boxes: np.ndarray, scores: np.ndarray, nms_thr: float) -> list[int]:
 def multiclass_nms(
     boxes: np.ndarray, scores: np.ndarray, nms_thr: float, score_thr: float
 ) -> np.ndarray | None:
-    """执行按类别区分的非极大值抑制。"""
+    """执行按类别区分的非极大值抑制。
+
+    Args:
+        boxes: 边界框坐标数组。
+        scores: 各边界框针对每个类别的置信度。
+        nms_thr: 重叠率抑制阈值。
+        score_thr: 最低置信度阈值。
+
+    Returns:
+        合并类别索引后的检测结果；没有有效结果时返回 ``None``。
+    """
     final_dets = []
     num_classes = scores.shape[1]
     for cls_ind in range(num_classes):
@@ -61,7 +80,16 @@ def multiclass_nms(
 def demo_postprocess(
     outputs: np.ndarray, img_size: tuple[int, int], p6: bool = False
 ) -> np.ndarray:
-    """将模型输出的网格坐标还原为图像坐标。"""
+    """将模型输出的网格坐标还原为图像坐标。
+
+    Args:
+        outputs: YOLOX 模型输出数组。
+        img_size: 模型输入尺寸，格式为（高，宽）。
+        p6: 是否使用包含步长 64 的 P6 特征层。
+
+    Returns:
+        还原到输入图像尺度的模型输出。
+    """
     grids = []
     expanded_strides = []
     strides = [8, 16, 32] if not p6 else [8, 16, 32, 64]
@@ -88,7 +116,16 @@ def preprocess(
     input_size: tuple[int, int],
     swap: tuple[int, int, int] = (2, 0, 1),
 ) -> tuple[np.ndarray, float]:
-    """缩放并填充输入图像，返回模型输入和缩放比例。"""
+    """缩放并填充目标检测输入图像。
+
+    Args:
+        img: 输入图像。
+        input_size: 模型输入尺寸，格式为（高，宽）。
+        swap: 输出数组的维度排列顺序。
+
+    Returns:
+        模型输入数组和图像缩放比例。
+    """
     if len(img.shape) == 3:
         padded_img = np.ones((input_size[0], input_size[1], 3), dtype=np.uint8) * 114
     else:
@@ -109,7 +146,15 @@ def preprocess(
 def inference_detector(
     session: onnxruntime.InferenceSession, ori_img: np.ndarray
 ) -> np.ndarray:
-    """执行目标检测推理并返回人体边界框。"""
+    """执行目标检测推理并返回人体边界框。
+
+    Args:
+        session: 目标检测 ONNX Runtime 会话。
+        ori_img: BGR 格式的输入图像。
+
+    Returns:
+        置信度达到阈值的人体边界框数组。
+    """
     input_shape = (640,640)
     img, ratio = preprocess(ori_img, input_shape)
 

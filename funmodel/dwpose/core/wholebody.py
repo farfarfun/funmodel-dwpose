@@ -6,16 +6,32 @@ from .onnxpose import inference_pose
 
 
 class Wholebody:
+    """组合人体检测和姿态模型的全身关键点估计器。"""
+
     def __init__(self,
-                 onnx_det='annotator/ckpts/yolox_l.onnx',
-                 onnx_pose='annotator/ckpts/dw-ll_ucoco_384.onnx'):
+                 onnx_det: str = 'annotator/ckpts/yolox_l.onnx',
+                 onnx_pose: str = 'annotator/ckpts/dw-ll_ucoco_384.onnx') -> None:
+        """初始化 ONNX 检测和姿态推理会话。
+
+        Args:
+            onnx_det: 人体检测 ONNX 模型路径。
+            onnx_pose: 姿态估计 ONNX 模型路径。
+        """
         device = 'cuda:0'
         providers = ['CPUExecutionProvider'] if device == 'cpu' else ['CUDAExecutionProvider']
 
         self.session_det = ort.InferenceSession(path_or_bytes=onnx_det, providers=providers)
         self.session_pose = ort.InferenceSession(path_or_bytes=onnx_pose, providers=providers)
 
-    def __call__(self, oriImg):
+    def __call__(self, oriImg: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """估计图像中的全身关键点及其置信度。
+
+        Args:
+            oriImg: BGR 格式的输入图像。
+
+        Returns:
+            OpenPose 顺序的关键点坐标和对应置信度。
+        """
         det_result = inference_detector(self.session_det, oriImg)
         keypoints, scores = inference_pose(self.session_pose, det_result, oriImg)
         keypoints_info = np.concatenate((keypoints, scores[..., None]), axis=-1)

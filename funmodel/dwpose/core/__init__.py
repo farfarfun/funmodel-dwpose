@@ -5,6 +5,7 @@
 # 4th Edited by ControlNet (added face and correct hands)
 
 import os
+from typing import Any
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 import torch
@@ -12,7 +13,17 @@ import numpy as np
 from . import util
 from .wholebody import Wholebody
 
-def draw_pose(pose, H, W):
+def draw_pose(pose: dict[str, Any], H: int, W: int) -> np.ndarray:
+    """将完整姿态结果绘制到空白画布。
+
+    Args:
+        pose: 包含人体、手部和面部关键点的姿态结果。
+        H: 输出画布高度。
+        W: 输出画布宽度。
+
+    Returns:
+        绘制姿态骨架后的图像。
+    """
     bodies = pose['bodies']
     faces = pose['faces']
     hands = pose['hands']
@@ -30,11 +41,22 @@ def draw_pose(pose, H, W):
 
 
 class DWposeDetector:
-    def __init__(self):
+    """执行全身姿态估计并生成骨架图的检测器。"""
+
+    def __init__(self) -> None:
+        """初始化全身姿态估计模型。"""
 
         self.pose_estimation = Wholebody()
 
-    def __call__(self, oriImg):
+    def __call__(self, oriImg: np.ndarray) -> np.ndarray:
+        """检测输入图像中的人体姿态并绘制骨架。
+
+        Args:
+            oriImg: BGR 格式的输入图像。
+
+        Returns:
+            与输入图像尺寸一致的姿态骨架图。
+        """
         oriImg = oriImg.copy()
         H, W, C = oriImg.shape
         with torch.no_grad():
