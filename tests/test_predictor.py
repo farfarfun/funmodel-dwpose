@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from funmodel.dwpose import DWposePredict
+from funmodel.dwpose.core import DWposeDetector
 
 
 class _FakePoseEstimation:
@@ -20,6 +21,15 @@ class _FakePoseEstimation:
 class _EmptyPoseEstimation:
     def __call__(self, img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         return np.empty((0, 134, 2), dtype=np.float64), np.empty((0, 134))
+
+
+class _DetectorPoseEstimation:
+    """返回一个可绘制的全身关键点集合。"""
+
+    def __call__(self, img: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        candidate = np.full((1, 134, 2), 10.0, dtype=np.float64)
+        subset = np.ones((1, 134), dtype=np.float64)
+        return candidate, subset
 
 
 @pytest.fixture
@@ -81,3 +91,16 @@ def test_predict_handles_no_detections(predictor: DWposePredict) -> None:
 def test_predict_rejects_non_image_input(predictor: DWposePredict) -> None:
     with pytest.raises(ValueError):
         predictor.predict(np.zeros((10, 20), dtype=np.uint8))
+
+
+def test_detector_draws_pose(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "funmodel.dwpose.core.Wholebody", lambda: _DetectorPoseEstimation()
+    )
+    detector = DWposeDetector()
+
+    drawn = detector(np.zeros((40, 20, 3), dtype=np.uint8))
+
+    assert drawn.shape == (40, 20, 3)
+    assert drawn.dtype == np.uint8
+    assert drawn.any()
