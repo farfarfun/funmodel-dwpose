@@ -21,5 +21,6 @@ def example_with_capture():
         cv2.waitKey(1)
 
 
-# example_with_image()
-example_with_capture()
+if __name__ == "__main__":
+    # example_with_image()
+    example_with_capture()
