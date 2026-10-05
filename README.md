@@ -29,11 +29,15 @@ cv2.imwrite("output.jpg", drawn_image)
 
 `funmodel/dwpose/core/` 下的检测、姿态估计与绘制代码移植自：
 
-- [CMU-Perceptual-Computing-Lab/openpose](https://github.com/CMU-Perceptual-Computing-Lab/openpose)（原始实现）
-- [Hzzone/pytorch-openpose](https://github.com/Hzzone/pytorch-openpose)（二次移植）
-- [IDEA-Research/DWPose](https://github.com/IDEA-Research/DWPose)（ONNX 推理管线）
+- [CMU-Perceptual-Computing-Lab/openpose](https://github.com/CMU-Perceptual-Computing-Lab/openpose)（原始实现，**许可证为学术/非营利非商业研究专用**，非 MIT）
+- [Hzzone/pytorch-openpose](https://github.com/Hzzone/pytorch-openpose)（PyTorch 二次实现，**未提供明确许可证**）
+- [lllyasviel/ControlNet](https://github.com/lllyasviel/ControlNet)（补充面部/手部检测，Apache License 2.0）
+- [IDEA-Research/DWPose](https://github.com/IDEA-Research/DWPose)（本仓库实际使用的 ONNX 推理管线，Apache License 2.0）
 
-以上上游项目均为 MIT/兼容协议，移植代码保留原始来源说明，与本仓库统一的 MIT 协议兼容。
+上述上游项目许可证并不统一为 MIT：ControlNet、DWPose 为 Apache-2.0（与 MIT 兼容），但 CMU OpenPose
+仅限非商业研究使用、pytorch-openpose 未声明许可证。详见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)
+的逐项核实结果；是否继续以 MIT 对外分发可追溯至 CMU OpenPose 的绘制/检测实现，属于需仓库所有者权衡的
+合规决策。
 
 ---
 
