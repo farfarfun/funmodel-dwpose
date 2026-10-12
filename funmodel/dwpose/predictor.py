@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -6,6 +7,21 @@ from fundrive.drives.oss import public_oss_url
 from funmodel.core.predict import ImagePredictModel
 from funmodel.dwpose.core import util
 from funmodel.dwpose.core.wholebody import Wholebody
+
+
+def _download_model(url: str, filepath: str) -> None:
+    """下载模型，并在下载失败或目标文件缺失时保留诊断上下文。"""
+    try:
+        simple_download(url=url, filepath=filepath)
+    except Exception as exc:
+        raise RuntimeError(
+            f"Failed to download model from {url} to {filepath}"
+        ) from exc
+
+    if not Path(filepath).is_file():
+        raise RuntimeError(
+            f"Model download from {url} did not create expected file: {filepath}"
+        )
 
 
 class DWposePredict(ImagePredictModel):
@@ -20,10 +36,10 @@ class DWposePredict(ImagePredictModel):
         """下载 DWPose 的检测与姿态 ONNX 权重（若本地缓存缺失）并初始化推理器。"""
         onnx_det = f"{self.cache_path}/yolox_l.onnx"
         onnx_pose = f"{self.cache_path}/dw-ll_ucoco_384.onnx"
-        simple_download(
+        _download_model(
             url=public_oss_url(path="models/dwpose/yolox_l.onnx"), filepath=onnx_det
         )
-        simple_download(
+        _download_model(
             url=public_oss_url(path="models/dwpose/dw-ll_ucoco_384.onnx"),
             filepath=onnx_pose,
         )

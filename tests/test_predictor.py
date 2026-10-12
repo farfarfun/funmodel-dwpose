@@ -1,11 +1,15 @@
 # DWposePredict.__init__ 会自动下载权重并加载 ONNX 会话，测试中通过 monkeypatch
 # 跳过 load()，直接构造对象后注入假的 pose_estimation，覆盖 predict/draw_image
 # 的坐标归一化、可见性过滤与绘制路径，不依赖真实网络/模型文件。
+from pathlib import Path
+
 import numpy as np
 import pytest
 
 from funmodel.dwpose import DWposePredict
 from funmodel.dwpose.core import DWposeDetector
+from funmodel.dwpose.core import wholebody
+from funmodel.dwpose.predictor import _download_model
 
 
 class _FakePoseEstimation:
@@ -104,3 +108,56 @@ def test_detector_draws_pose(monkeypatch: pytest.MonkeyPatch) -> None:
     assert drawn.shape == (40, 20, 3)
     assert drawn.dtype == np.uint8
     assert drawn.any()
+
+
+@pytest.mark.parametrize(
+    ("available_providers", "expected_providers"),
+    [
+        (["CPUExecutionProvider"], ["CPUExecutionProvider"]),
+        (
+            ["CUDAExecutionProvider", "CPUExecutionProvider"],
+            ["CUDAExecutionProvider", "CPUExecutionProvider"],
+        ),
+    ],
+)
+def test_wholebody_uses_available_onnx_providers(
+    monkeypatch: pytest.MonkeyPatch,
+    available_providers: list[str],
+    expected_providers: list[str],
+) -> None:
+    calls: list[tuple[str, list[str]]] = []
+
+    def create_session(path_or_bytes: str, providers: list[str]) -> object:
+        calls.append((path_or_bytes, providers))
+        return object()
+
+    monkeypatch.setattr(
+        wholebody.ort, "get_available_providers", lambda: available_providers
+    )
+    monkeypatch.setattr(wholebody.ort, "InferenceSession", create_session)
+
+    wholebody.Wholebody(onnx_det="det.onnx", onnx_pose="pose.onnx")
+
+    assert calls == [
+        ("det.onnx", expected_providers),
+        ("pose.onnx", expected_providers),
+    ]
+
+
+def test_load_reports_download_url_and_destination(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    url = "https://example.invalid/yolox_l.onnx"
+    destination = tmp_path / "yolox_l.onnx"
+
+    def fail_download(*args: object, **kwargs: object) -> None:
+        raise OSError("connection refused")
+
+    monkeypatch.setattr("funmodel.dwpose.predictor.simple_download", fail_download)
+
+    with pytest.raises(RuntimeError, match="yolox_l\\.onnx") as exc_info:
+        _download_model(url, str(destination))
+
+    assert url in str(exc_info.value)
+    assert str(destination) in str(exc_info.value)
+    assert isinstance(exc_info.value.__cause__, OSError)

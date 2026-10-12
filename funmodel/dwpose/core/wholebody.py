@@ -17,8 +17,10 @@ class Wholebody:
             onnx_det: 人体检测 ONNX 模型路径。
             onnx_pose: 姿态估计 ONNX 模型路径。
         """
-        device = 'cuda:0'
-        providers = ['CPUExecutionProvider'] if device == 'cpu' else ['CUDAExecutionProvider']
+        available_providers = ort.get_available_providers()
+        providers = ['CPUExecutionProvider']
+        if 'CUDAExecutionProvider' in available_providers:
+            providers.insert(0, 'CUDAExecutionProvider')
 
         self.session_det = ort.InferenceSession(path_or_bytes=onnx_det, providers=providers)
         self.session_pose = ort.InferenceSession(path_or_bytes=onnx_pose, providers=providers)
