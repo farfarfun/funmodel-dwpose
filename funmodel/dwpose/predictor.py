@@ -1,3 +1,12 @@
+# Copyright 2024 farfarfun
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# 本文件的封装层（模型下载、推理入口、结果整形）为 farfarfun 自研，但关键点
+# 切片常量沿用 OpenPose 的 COCO-18 + WholeBody 关键点顺序，且 draw_image()
+# 直接调用 funmodel.dwpose.core.util 的绘制函数——该模块的上游许可证状况见
+# NOTICE 与 THIRD_PARTY_LICENSES.md。
+
 from pathlib import Path
 from typing import Any
 

@@ -1,3 +1,16 @@
+# Copyright 2023 IDEA. All Rights Reserved.
+# Copyright 2024 farfarfun
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# 本文件取自 IDEA-Research/DWPose（分支 onnx）的
+# ControlNet-v1-1-nightly/annotator/dwpose/wholebody.py，按 Apache License 2.0 使用
+# （去注释后 token 级相似度约 89%）。farfarfun 的修改为：新增 CUDA
+# ExecutionProvider 可用性选择、中文 docstring 与类型标注。
+# __call__ 中 MMPose→OpenPose 的关键点索引重排表（mmpose_idx / openpose_idx）
+# 与颈部关键点合成逻辑均来自上游。
+# 逐项许可证核实见 NOTICE 与 THIRD_PARTY_LICENSES.md。
+
 import numpy as np
 import onnxruntime as ort
 

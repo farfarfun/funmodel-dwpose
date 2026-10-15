@@ -1,0 +1,105 @@
+funmodel-dwpose
+Copyright 2024 farfarfun
+
+本产品包含由第三方开发的软件，依据 Apache License 2.0 第 4(d) 条在此列出其
+版权声明与出处。各文件头部另有逐文件的 `SPDX-License-Identifier` 与来源标注，
+逐项许可证核实结果见 THIRD_PARTY_LICENSES.md。
+
+--------------------------------------------------------------------------------
+1. IDEA-Research/DWPose
+--------------------------------------------------------------------------------
+
+`funmodel/dwpose/core/` 下的全部模块（`__init__.py`、`util.py`、`onnxdet.py`、
+`onnxpose.py`、`wholebody.py`）直接取自 DWPose 的
+`ControlNet-v1-1-nightly/annotator/dwpose/` 目录（分支 `onnx`）。
+
+    DWPose (https://github.com/IDEA-Research/DWPose)
+
+    Copyright 2023 IDEA. All Rights Reserved.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+--------------------------------------------------------------------------------
+2. OpenMMLab / MMPose
+--------------------------------------------------------------------------------
+
+`funmodel/dwpose/core/onnxpose.py` 中的 `get_simcc_maximum`、`bbox_xyxy2cs`、
+`get_warp_matrix`、`top_down_affine`、`_fix_aspect_ratio`、`_rotate_point`、
+`_get_3rd_point` 经由 DWPose 取自 MMPose（`mmpose/codecs/utils/post_processing.py`、
+`mmpose/structures/bbox/transforms.py`、`mmpose/datasets/transforms/topdown_transforms.py`）。
+DWPose 的 LICENSE 文件末尾亦追加了同一声明。
+
+    MMPose (https://github.com/open-mmlab/mmpose)
+
+    Copyright 2018-2020 Open-MMLab. All rights reserved.
+    Copyright (c) OpenMMLab. All rights reserved.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+--------------------------------------------------------------------------------
+3. Megvii Inc. / YOLOX
+--------------------------------------------------------------------------------
+
+`funmodel/dwpose/core/onnxdet.py` 中的 `nms`、`multiclass_nms`、
+`demo_postprocess` 经由 DWPose 取自 YOLOX（`yolox/utils/demo_utils.py`）；
+本仓库实际使用的检测权重 `yolox_l.onnx` 亦源自该项目的模型系列。
+
+    YOLOX (https://github.com/Megvii-BaseDetection/YOLOX)
+
+    Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+--------------------------------------------------------------------------------
+4. lllyasviel/ControlNet
+--------------------------------------------------------------------------------
+
+`funmodel/dwpose/core/util.py` 的 `faceDetect`（上游注释为 `# Written by Lvmin`）
+及面部/手部绘制部分来自 ControlNet 的 OpenPose annotator。本仓库在
+`d939bea` 之前的 LICENSE 文件与 PyPI 上 `0.0.11` 的 `dist-info/LICENSE`
+与 ControlNet 的 LICENSE 文件逐字节相同（sha256 `c71d239d…`），
+即本仓库最初的 Apache-2.0 文本就是沿用自该项目。
+
+    ControlNet (https://github.com/lllyasviel/ControlNet)
+    Copyright Lvmin Zhang and contributors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+--------------------------------------------------------------------------------
+5. 非 Apache-2.0 的上游（不属于本 NOTICE 的 §4(d) 义务，列出以求出处完整）
+--------------------------------------------------------------------------------
+
+下列两个上游不以 Apache-2.0 授权，其许可证状况无法通过署名满足，详见
+THIRD_PARTY_LICENSES.md，相关处置在
+https://github.com/farfarfun/todo-list/issues/894 跟踪，尚未结论。
+
+- Hzzone/pytorch-openpose (https://github.com/Hzzone/pytorch-openpose)
+  仓库未提供任何 LICENSE 文件（GitHub API `license: null`）。
+  `util.py` 的 `transfer()` 是该上游遗留的 caffe→pytorch 权重改名函数，
+  在本包内为死代码（仅 ONNX 推理路径，无任何调用点）。
+
+- CMU-Perceptual-Computing-Lab/openpose
+  (https://github.com/CMU-Perceptual-Computing-Lab/openpose)
+  许可证标题为「OPENPOSE: MULTIPERSON KEYPOINT DETECTION SOFTWARE LICENSE
+  AGREEMENT — ACADEMIC OR NON-PROFIT ORGANIZATION NONCOMMERCIAL RESEARCH USE
+  ONLY」，Carnegie Mellon University 保留权利，GitHub 将其归类为
+  `NOASSERTION`，并非任何标准开源协议。`util.py` 的 `handDetect`、
+  `draw_bodypose` 的 19 组 `limbSeq` 与 18 色调色板、`draw_handpose` 的 21 点
+  手部骨架边表来自该项目；`handDetect` 内含其 `src/openpose/hand/handDetector.cpp`
+  的逐字 C++ 源码注释。

@@ -4,8 +4,10 @@ version = "0.0.12"
 description = "基于 DWPose 的人体全身姿态估计模型，funmodel 命名空间子包"
 readme = "README.md"
 requires-python = ">=3.12"
-license = "MIT"
-license-files = ["LICENSE"]
+# 本包衍生自 IDEA-Research/DWPose 等第三方 Apache-2.0 代码，沿用上游协议，
+# 非组织默认的 MIT。NOTICE 必须随发行物一起分发（Apache-2.0 §4(d)）。
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "牛哥", email = "farfarfun@qq.com" }]
 dependencies = [
     "funmodel>=0.0.9",

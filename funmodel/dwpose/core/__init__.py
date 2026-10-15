@@ -1,3 +1,15 @@
+# Copyright 2023 IDEA. All Rights Reserved.
+# Copyright 2024 farfarfun
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# 本文件取自 IDEA-Research/DWPose（分支 onnx）的
+# ControlNet-v1-1-nightly/annotator/dwpose/__init__.py，按 Apache License 2.0 使用。
+# farfarfun 的修改为：补充中文 docstring 与类型标注、移除 subset 索引重排逻辑。
+# 已发布的 funmodel-dwpose 0.0.11 中该文件与上游逐字节相同
+# （sha256 a0925acf…，1983 字节）。
+# 上游移植链路见下方原始注释；逐项许可证核实见 NOTICE 与 THIRD_PARTY_LICENSES.md。
+
 # Openpose
 # Original from CMU https://github.com/CMU-Perceptual-Computing-Lab/openpose
 # 2nd Edited by https://github.com/Hzzone/pytorch-openpose
