@@ -1,3 +1,17 @@
+# Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
+# Copyright 2023 IDEA. All Rights Reserved.
+# Copyright 2024 farfarfun
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# 本文件取自 IDEA-Research/DWPose（分支 onnx）的
+# ControlNet-v1-1-nightly/annotator/dwpose/onnxdet.py，按 Apache License 2.0 使用。
+# 其中 nms / multiclass_nms / demo_postprocess 再上溯至 Megvii YOLOX 的
+# yolox/utils/demo_utils.py（归一化比对后 nms 与 demo_postprocess 与 YOLOX 完全一致）。
+# farfarfun 的修改仅为中文 docstring、类型标注与格式化，逻辑未变；已发布的
+# 0.0.11 中该文件与上游逐字节相同（sha256 4c82a928…，4331 字节）。
+# 逐项许可证核实见 NOTICE 与 THIRD_PARTY_LICENSES.md。
+
 import cv2
 import numpy as np
 

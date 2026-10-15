@@ -25,19 +25,30 @@ cv2.imwrite("output.jpg", drawn_image)
 
 首次调用 `DWposePredict()` 会自动从对象存储下载 ONNX 权重（`yolox_l.onnx`、`dw-ll_ucoco_384.onnx`）到本地缓存目录（`~/.funmodel/<model_name>/`）。
 
+## 许可证
+
+本仓库**不是**自研实现，`funmodel/dwpose/core/` 下的 5 个模块全部取自
+[IDEA-Research/DWPose](https://github.com/IDEA-Research/DWPose)（Apache-2.0）。
+因此本仓库沿用上游协议，以 **[Apache License 2.0](LICENSE)** 开源，而不是组织默认的 MIT；
+上游署名见 [NOTICE](NOTICE)。
+
 ## 第三方代码来源
 
-`funmodel/dwpose/core/` 下的检测、姿态估计与绘制代码移植自：
+`funmodel/dwpose/core/` 下的检测、姿态估计与绘制代码取自：
 
-- [CMU-Perceptual-Computing-Lab/openpose](https://github.com/CMU-Perceptual-Computing-Lab/openpose)（原始实现，**许可证为学术/非营利非商业研究专用**，非 MIT）
-- [Hzzone/pytorch-openpose](https://github.com/Hzzone/pytorch-openpose)（PyTorch 二次实现，**未提供明确许可证**）
-- [lllyasviel/ControlNet](https://github.com/lllyasviel/ControlNet)（补充面部/手部检测，Apache License 2.0）
-- [IDEA-Research/DWPose](https://github.com/IDEA-Research/DWPose)（本仓库实际使用的 ONNX 推理管线，Apache License 2.0）
+- [IDEA-Research/DWPose](https://github.com/IDEA-Research/DWPose)（本仓库的直接上游，提供全部 ONNX 推理与绘制代码，Apache-2.0）
+- [open-mmlab/mmpose](https://github.com/open-mmlab/mmpose)（`onnxpose.py` 的 SimCC 解码与仿射变换工具，Apache-2.0）
+- [Megvii-BaseDetection/YOLOX](https://github.com/Megvii-BaseDetection/YOLOX)（`onnxdet.py` 的 NMS 与检测后处理，Apache-2.0）
+- [lllyasviel/ControlNet](https://github.com/lllyasviel/ControlNet)（`util.py` 的 `faceDetect` 与面部/手部绘制，Apache-2.0）
+- [Hzzone/pytorch-openpose](https://github.com/Hzzone/pytorch-openpose)（`util.py` 的 `transfer()`，该仓库**未提供任何 LICENSE 文件**）
+- [CMU-Perceptual-Computing-Lab/openpose](https://github.com/CMU-Perceptual-Computing-Lab/openpose)（`util.py` 的 `handDetect` 与骨架/调色板常量，**许可证为学术/非营利非商业研究专用**，GitHub 归类为 `NOASSERTION`，既非 Apache-2.0 也非 MIT）
 
-上述上游项目许可证并不统一为 MIT：ControlNet、DWPose 为 Apache-2.0（与 MIT 兼容），但 CMU OpenPose
-仅限非商业研究使用、pytorch-openpose 未声明许可证。详见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)
-的逐项核实结果；是否继续以 MIT 对外分发可追溯至 CMU OpenPose 的绘制/检测实现，属于需仓库所有者权衡的
-合规决策。
+前四项为 Apache-2.0，其署名义务已通过 `LICENSE`、`NOTICE` 与逐文件版权头履行。
+后两项的许可证状况**无法通过署名满足**：pytorch-openpose 未声明许可证，CMU OpenPose
+的协议禁止分发且不授予再授权权。该部分的处置（含 PyPI 上已发布版本）在
+[farfarfun/todo-list#894](https://github.com/farfarfun/todo-list/issues/894) 跟踪，
+**尚未结论**。逐项实测证据与许可证原文引用见
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)，引用方请据此自行评估。
 
 ---
 
@@ -50,4 +61,5 @@ cv2.imwrite("output.jpg", drawn_image)
 - 📦 PyPI：<https://pypi.org/user/niuliangtao/>
 - 📧 联系：farfarfun@qq.com
 
-本项目基于 [MIT](LICENSE) 协议开源。
+本项目基于 [Apache-2.0](LICENSE) 协议开源（衍生自第三方 Apache-2.0 代码，沿用上游协议，
+非组织默认的 MIT；详见上方「许可证」与 [NOTICE](NOTICE)）。

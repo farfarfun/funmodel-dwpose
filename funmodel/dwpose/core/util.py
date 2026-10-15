@@ -1,3 +1,28 @@
+# Copyright 2023 IDEA. All Rights Reserved.
+# Copyright 2024 farfarfun
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# 本文件取自 IDEA-Research/DWPose（分支 onnx）的
+# ControlNet-v1-1-nightly/annotator/dwpose/util.py，按 Apache License 2.0 使用。
+# 本文件 10 个函数全部存在于上游，farfarfun 未新增任何函数，修改仅为中文
+# docstring、类型标注与 black 格式化（去注释后 token 级相似度约 91%）。
+#
+# 注意：本文件的移植链路不止 Apache-2.0 一条。其绘制与手部检测部分上溯至
+# CMU OpenPose，该项目许可证标题为「ACADEMIC OR NON-PROFIT ORGANIZATION
+# NONCOMMERCIAL RESEARCH USE ONLY」（GitHub 归类 NOASSERTION），既非
+# Apache-2.0 亦非 MIT，无法通过署名满足：
+#   - handDetect    ← CMU src/openpose/hand/handDetector.cpp 的 Python 转写，
+#                     函数内保留该 C++ 源码的逐字注释（见 handDetect 处标注）
+#   - draw_bodypose ← CMU COCO-18 骨架：19 组 limbSeq 连接表 + 18 色调色板
+#   - draw_handpose ← CMU hand model 的 21 点手部骨架边表
+#   - faceDetect    ← lllyasviel/ControlNet（上游注释 "Written by Lvmin"），Apache-2.0
+#   - transfer      ← Hzzone/pytorch-openpose（该仓库无 LICENSE 文件）；本包仅走
+#                     ONNX 推理，此函数在包内无任何调用点，为死代码
+#
+# 逐项许可证核实见 NOTICE 与 THIRD_PARTY_LICENSES.md；CMU OpenPose 相关的分发权
+# 问题在 https://github.com/farfarfun/todo-list/issues/894 跟踪，尚未结论。
+
 import math
 from typing import Any, Mapping
 
@@ -292,6 +317,20 @@ def draw_facepose(
     return canvas
 
 
+# ---------------------------------------------------------------------------
+# 许可证标注（farfarfun 补充，非上游内容）
+#
+# 以下 handDetect 是 CMU OpenPose `src/openpose/hand/handDetector.cpp` 的
+# Python 逐行转写，并且把该 C++ 源码的注释一起搬了过来：函数体内以
+# `# handRectangle.…` / `# const auto distance…` 开头的几行即 CMU 原文
+# 第 25-29 行与第 34-35 行；常量 `ratioWristElbow = 0.33` 对应 CMU 第 20 行
+# `const auto ratioWristElbow = 0.33f;`。
+#
+# CMU OpenPose 的许可证为「学术/非营利机构非商业研究专用」，不是 Apache-2.0，
+# 也不是 MIT，因此这一部分的许可证状况**无法通过本仓库的署名补正来满足**。
+# 事实核实见 THIRD_PARTY_LICENSES.md，处置在
+# https://github.com/farfarfun/todo-list/issues/894 跟踪，尚未结论。
+# ---------------------------------------------------------------------------
 # detect hand according to body pose keypoints
 # please refer to https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/src/openpose/hand/handDetector.cpp
 def handDetect(

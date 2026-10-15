@@ -1,3 +1,19 @@
+# Copyright 2018-2020 Open-MMLab. All rights reserved.
+# Copyright 2023 IDEA. All Rights Reserved.
+# Copyright 2024 farfarfun
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# 本文件取自 IDEA-Research/DWPose（分支 onnx）的
+# ControlNet-v1-1-nightly/annotator/dwpose/onnxpose.py，按 Apache License 2.0 使用。
+# 其中 get_simcc_maximum / bbox_xyxy2cs / get_warp_matrix / top_down_affine /
+# _fix_aspect_ratio / _rotate_point / _get_3rd_point 再上溯至 OpenMMLab MMPose
+# （mmpose/codecs/utils/post_processing.py、mmpose/structures/bbox/transforms.py、
+# mmpose/datasets/transforms/topdown_transforms.py）。
+# farfarfun 的修改仅为中文 docstring、类型标注与格式化，逻辑未变；已发布的
+# 0.0.11 中该文件与上游逐字节相同（sha256 16fb69ab…，11608 字节）。
+# 逐项许可证核实见 NOTICE 与 THIRD_PARTY_LICENSES.md。
+
 
 import cv2
 import numpy as np
