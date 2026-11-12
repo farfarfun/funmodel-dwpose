@@ -17,7 +17,7 @@
 | `core/__init__.py` | `annotator/dwpose/__init__.py` | 已发布的 **0.0.11 与上游逐字节相同**（sha256 `a0925acf…`，1983 字节）。当前 master 增加了中文 docstring、类型标注，并移除 subset 索引重排逻辑 |
 | `core/onnxdet.py` | `annotator/dwpose/onnxdet.py` | 已发布的 **0.0.11 与上游逐字节相同**（sha256 `4c82a928…`，4331 字节）。当前 master 仅增加中文 docstring、类型标注与格式化，逻辑未变（去注释后 token 级相似度约 96%） |
 | `core/onnxpose.py` | `annotator/dwpose/onnxpose.py` | 已发布的 **0.0.11 与上游逐字节相同**（sha256 `16fb69ab…`，11608 字节）。当前 master 同上（去注释后约 94%） |
-| `core/util.py` | `annotator/dwpose/util.py` | **全部 10 个函数均存在于上游，无一个是自研**；差异仅为中文 docstring、类型标注与 black 格式化（去注释后 token 级相似度约 91%） |
+| `core/util.py` | `annotator/dwpose/util.py` | **现存 9 个函数均存在于上游，无一个是自研**；原有的 `transfer()` 已删除，其余差异主要为中文 docstring、类型标注与格式化 |
 | `core/wholebody.py` | `annotator/dwpose/wholebody.py` | 去注释后 token 级相似度约 89%；差异为自加的 CUDA ExecutionProvider 选择 |
 | `predictor.py` | — | 封装层（下载、推理入口、结果整形）为自研，但关键点切片常量沿用 OpenPose 顺序，且 `draw_image()` 直接调用 `util.draw_bodypose/draw_handpose/draw_facepose` |
 
@@ -63,7 +63,7 @@ COCO-18 骨架常量，`draw_handpose` 的 21 点手部骨架边表就是 OpenPo
 | [open-mmlab/mmpose](https://github.com/open-mmlab/mmpose) | **Apache-2.0**，`Copyright 2018-2020 Open-MMLab.`，逐文件头部 `# Copyright (c) OpenMMLab. All rights reserved.` | 同上 |
 | [Megvii-BaseDetection/YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) | **Apache-2.0**，附录已填 `Copyright (c) 2021-2022 Megvii Inc. All rights reserved.` | 同上 |
 | [lllyasviel/ControlNet](https://github.com/lllyasviel/ControlNet) | **Apache-2.0**（其 LICENSE 附录未填写，仍为 `Copyright [yyyy] [name of copyright owner]`） | 同上 |
-| [Hzzone/pytorch-openpose](https://github.com/Hzzone/pytorch-openpose) | **无 LICENSE 文件**（GitHub API `license: null`）→ 默认保留全部权利，未授予使用/修改/再分发权 | 无法通过署名满足，见第四节 |
+| [Hzzone/pytorch-openpose](https://github.com/Hzzone/pytorch-openpose) | **无 LICENSE 文件**（GitHub API `license: null`）→ 默认保留全部权利，未授予使用/修改/再分发权 | 直接复制的 `transfer()` 已删除；上游 `core/__init__.py` 仍注明其编辑链路，剩余贡献边界待核实 |
 | [CMU-Perceptual-Computing-Lab/openpose](https://github.com/CMU-Perceptual-Computing-Lab/openpose) | **非标准开源协议**，见下 | 无法通过署名满足，见第四节 |
 
 ### CMU OpenPose 许可证条款
@@ -114,17 +114,16 @@ GitHub API 将该许可证归类为 `spdx_id: "NOASSERTION"` / `name: "Other"`�
 
 ## 四、尚未解决的问题
 
-以下两项**不是**署名问题，无法通过 `NOTICE` 与逐文件版权头解决，仍在
+以下问题**不是**署名问题，无法通过 `NOTICE` 与逐文件版权头解决，仍在
 [farfarfun/todo-list#894](https://github.com/farfarfun/todo-list/issues/894)
 跟踪，尚无结论：
 
 1. **CMU OpenPose 的分发权**。其许可证禁止分发、不授予再授权权、并约定衍生物
    所有权归 Licensor；而「把 C++ 转写成 Python 是否构成该协议下的 derivative」
    是法律判断，不是可查证的事实。本文件只给出第一节的逐字对照证据，不下结论。
-2. **pytorch-openpose 无许可证**。`util.py` 的 `transfer()` 来自该上游，是
-   caffe→pytorch 的权重改名函数；本包只走 ONNX 推理路径，该函数在包内无任何
-   调用点，属死代码。
-
+2. **pytorch-openpose 的贡献边界**。本仓库原有、直接取自该无许可证上游的
+   `transfer()` 已删除；`core/__init__.py` 保留了 DWPose 上游关于 Hzzone 编辑
+   链路的注释，其余代码是否包含该贡献尚未核实。
 此外还有一个**与代码许可证完全独立、本次未审计**的合规面：`predictor.py`
 从 farfarfun 自有对象存储重分发 ONNX 权重（`yolox_l.onnx`、
 `dw-ll_ucoco_384.onnx`）。模型权重的再分发条款（DWPose 权重涉及

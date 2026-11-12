@@ -1,6 +1,6 @@
 # funmodel-dwpose
 
-基于 [DWPose](https://github.com/IDEA-Research/DWPose)（含 CMU OpenPose / pytorch-openpose 移植代码）封装的人体全身姿态估计模型，作为 `funmodel` 命名空间下的一个子包发布（`import funmodel.dwpose`），提供开箱即用的关键点检测与骨架绘制能力。
+基于 [DWPose](https://github.com/IDEA-Research/DWPose)（含 CMU OpenPose 衍生代码）封装的人体全身姿态估计模型，作为 `funmodel` 命名空间下的一个子包发布（`import funmodel.dwpose`），提供开箱即用的关键点检测与骨架绘制能力。
 
 ## 安装
 
@@ -40,12 +40,13 @@ cv2.imwrite("output.jpg", drawn_image)
 - [open-mmlab/mmpose](https://github.com/open-mmlab/mmpose)（`onnxpose.py` 的 SimCC 解码与仿射变换工具，Apache-2.0）
 - [Megvii-BaseDetection/YOLOX](https://github.com/Megvii-BaseDetection/YOLOX)（`onnxdet.py` 的 NMS 与检测后处理，Apache-2.0）
 - [lllyasviel/ControlNet](https://github.com/lllyasviel/ControlNet)（`util.py` 的 `faceDetect` 与面部/手部绘制，Apache-2.0）
-- [Hzzone/pytorch-openpose](https://github.com/Hzzone/pytorch-openpose)（`util.py` 的 `transfer()`，该仓库**未提供任何 LICENSE 文件**）
+- [Hzzone/pytorch-openpose](https://github.com/Hzzone/pytorch-openpose)（上游 `core/__init__.py` 注释记载其编辑链路；本仓库原有的 `transfer()` 已删除，其余贡献边界未核实）
 - [CMU-Perceptual-Computing-Lab/openpose](https://github.com/CMU-Perceptual-Computing-Lab/openpose)（`util.py` 的 `handDetect` 与骨架/调色板常量，**许可证为学术/非营利非商业研究专用**，GitHub 归类为 `NOASSERTION`，既非 Apache-2.0 也非 MIT）
 
 前四项为 Apache-2.0，其署名义务已通过 `LICENSE`、`NOTICE` 与逐文件版权头履行。
-后两项的许可证状况**无法通过署名满足**：pytorch-openpose 未声明许可证，CMU OpenPose
-的协议禁止分发且不授予再授权权。该部分的处置（含 PyPI 上已发布版本）在
+后两项的许可证状况**无法通过署名满足**：Hzzone 的贡献边界未核实且其仓库无 LICENSE；
+CMU OpenPose 的协议禁止分发且不授予再授权权。
+该部分的处置（含 PyPI 上已发布版本）在
 [farfarfun/todo-list#894](https://github.com/farfarfun/todo-list/issues/894) 跟踪，
 **尚未结论**。逐项实测证据与许可证原文引用见
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)，引用方请据此自行评估。

@@ -91,8 +91,8 @@ https://github.com/farfarfun/todo-list/issues/894 跟踪，尚未结论。
 
 - Hzzone/pytorch-openpose (https://github.com/Hzzone/pytorch-openpose)
   仓库未提供任何 LICENSE 文件（GitHub API `license: null`）。
-  `util.py` 的 `transfer()` 是该上游遗留的 caffe→pytorch 权重改名函数，
-  在本包内为死代码（仅 ONNX 推理路径，无任何调用点）。
+  本仓库原有的 `util.py` 中 `transfer()` 已删除；上游 `core/__init__.py`
+  仍注明 Hzzone 编辑链路，其余贡献边界尚未核实。
 
 - CMU-Perceptual-Computing-Lab/openpose
   (https://github.com/CMU-Perceptual-Computing-Lab/openpose)

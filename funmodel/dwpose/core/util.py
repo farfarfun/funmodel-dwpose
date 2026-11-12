@@ -5,7 +5,7 @@
 #
 # 本文件取自 IDEA-Research/DWPose（分支 onnx）的
 # ControlNet-v1-1-nightly/annotator/dwpose/util.py，按 Apache License 2.0 使用。
-# 本文件 10 个函数全部存在于上游，farfarfun 未新增任何函数，修改仅为中文
+# 本文件 9 个函数全部存在于上游，farfarfun 未新增任何函数，修改仅为中文
 # docstring、类型标注与 black 格式化（去注释后 token 级相似度约 91%）。
 #
 # 注意：本文件的移植链路不止 Apache-2.0 一条。其绘制与手部检测部分上溯至
@@ -17,14 +17,12 @@
 #   - draw_bodypose ← CMU COCO-18 骨架：19 组 limbSeq 连接表 + 18 色调色板
 #   - draw_handpose ← CMU hand model 的 21 点手部骨架边表
 #   - faceDetect    ← lllyasviel/ControlNet（上游注释 "Written by Lvmin"），Apache-2.0
-#   - transfer      ← Hzzone/pytorch-openpose（该仓库无 LICENSE 文件）；本包仅走
-#                     ONNX 推理，此函数在包内无任何调用点，为死代码
 #
 # 逐项许可证核实见 NOTICE 与 THIRD_PARTY_LICENSES.md；CMU OpenPose 相关的分发权
 # 问题在 https://github.com/farfarfun/todo-list/issues/894 跟踪，尚未结论。
 
 import math
-from typing import Any, Mapping
+from typing import Any
 
 import cv2
 import matplotlib
@@ -119,24 +117,6 @@ def padRightDownCorner(
     img_padded = np.concatenate((img_padded, pad_right), axis=1)
 
     return img_padded, pad
-
-
-def transfer(model: Any, model_weights: Mapping[str, Any]) -> dict[str, Any]:
-    """将外部权重名称转换为模型状态字典使用的名称。
-
-    Args:
-        model: 提供 ``state_dict`` 方法的模型。
-        model_weights: 以外部参数名为键的权重映射。
-
-    Returns:
-        可供模型加载的权重字典。
-    """
-    transfered_model_weights = {}
-    for weights_name in model.state_dict().keys():
-        transfered_model_weights[weights_name] = model_weights[
-            ".".join(weights_name.split(".")[1:])
-        ]
-    return transfered_model_weights
 
 
 def draw_bodypose(canvas: np.ndarray, bodies: Any) -> np.ndarray:
